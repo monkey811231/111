@@ -1,0 +1,143 @@
+from game import time_search
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import pprint
+from time import sleep
+from random import randint
+
+s = time_search()
+for date in s:
+
+    url = 'https://www.sportsbookreview.com/betting-odds/mlb-baseball/pointspread/1st-half/?date={}'.format(date)
+    headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36'
+    }
+    req = requests.get(url, headers = headers)
+    soup = BeautifulSoup(req.text,'html.parser')
+
+
+    #檔名設定用
+    a = url[-8::]
+    print(a)
+
+    '''
+    計算當天場次 決定for迴圈次數
+    '''
+    # teamname = soup.select('div[class="_1eZfC"] div[class="_1FVbw"] div[class="_2563p"]')
+    # print(teamname)
+    # print(len(teamname)
+    teamname = soup.select('div[class="_2563p"]')
+    print(len(teamname))
+
+    '''
+    塞index取單場的資訊
+    '''
+    # for game_session in range(len(teamname)) : #用len()設定場次
+    #     num = game_session
+    try :
+        teamname0 = soup.select('div[class="_1eZfC"]')[0]#加上index開始爬
+    except IndexError:
+        print('\n【no game in today】\n')
+        continue
+    # print(teamname)
+
+
+    #take out team name
+
+    #塞index取單場的資訊
+    x = []
+    for game_session in range(len(teamname)) : #用len()設定場次
+        num = game_session
+        # print(num)
+        teamname1 = teamname0.select('div[class="_1FVbw"]')[num].select(' a div')[::3]  #[<div>STL</div>, <div>PIT</div>]
+        # print(teamname1)
+        x += teamname1
+    '''
+    將一天內所有出賽球隊列出
+    '''
+    teamname_list = [z.text for z in x]
+    # teamname_list = [i.text for i in teamname1 ] #將隊伍製成list塞入df #單日單場測試用
+
+
+    #take out peacher name
+
+    z = []
+    for game_session in range(len(teamname)):  # 用len()設定場次
+        num = game_session
+        # print(num)
+        peachername = teamname0.select('div[class="_1FVbw"]')[num].select('a[class="_3qi53"] div')[1::3] #('div[class="_34bLJ _3XJBX"] div')[:]
+        z += peachername
+    '''
+    將一天內所有出賽先發列出
+    '''
+    peachername_list = [w.text for w in z]
+    # print(peachername_list)
+
+
+
+
+    # take out point
+    one_1 = []
+    two_2 = []
+    three_3 = []
+    four_4 = []
+    five_5 = []
+    for game_session in range(len(teamname)) : #用len()設定場次
+        print(game_session)
+        try:
+            visiting_team_point = teamname0.select('div[class="_2563p"]')[game_session].select('div[class="_1Y3rN _308Yc"] div')[0::2]   #先攻隊得分
+            home_team_point = teamname0.select('div[class="_2563p"]')[game_session].select('div[class="_1Y3rN _308Yc"] div')[1::2]   #後功隊得分
+            # print(visiting_team_point)
+            # print(home_team_point)
+            visiting_team_point_list = [point.text for point in visiting_team_point]
+            home_team_point_list = [point.text for point in home_team_point]
+            # print(visiting_team_point_list)
+            # print(home_team_point_list)
+
+            #同一局上下整成list塞進game_content
+            one = [visiting_team_point_list[0] , home_team_point_list[0]]
+            # print(one)
+            one_1 += one
+            two = [visiting_team_point_list[1] , home_team_point_list[1]]
+            # print(two)
+            two_2 += two
+            three = [visiting_team_point_list[2] , home_team_point_list[2]]
+            # print(three)
+            three_3 += three
+            four = [visiting_team_point_list[3] , home_team_point_list[3]]
+            # print(four)
+            four_4 += four
+            five = [visiting_team_point_list[4] , home_team_point_list[4]]
+            # print(five)
+            five_5 += five
+        except:
+            print('XXXX')
+
+    print('======')
+    game_content = {'隊名':teamname_list,
+                    '先發投手':peachername_list,
+                    '一局':one_1,
+                    '二局':two_2,
+                    '三局':three_3,
+                    '四局':four_4,
+                    '五局':five_5
+                  }
+    '''
+    如何自動製作重複index??
+    '''
+    # try:
+    game20160403 = pd.DataFrame(game_content) #index=['客','主','客','主','客','主','客','主']
+    print(game20160403)
+    # except ValueError:
+    #     game20160403 = pd.DataFrame({'一局':'none',
+    #                 '二局':'none',
+    #                 '三局':'none',
+    #                 '四局':'none',
+    #                 '五局':'none'},index=[0])  #解決延賽
+
+    #將DATAFRAME輸出成csv
+    # game20160403.to_csv('game_Folder/game{date}.csv'.format(date=a),encoding='utf_8_sig')
+    #測試輸出
+    game20160403.to_csv('game{date}.csv'.format(date=a), encoding='utf_8_sig')
+    # sleep(randint(3,5))
