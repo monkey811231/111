@@ -1,0 +1,13 @@
+import datetime as dt
+
+def time_search():
+    startdate = dt.datetime(2016, 4, 8)
+    end_ate = dt.datetime(2016, 4, 11)
+
+    totaldays = (end_ate - startdate).days + 1
+
+    # 在for迴圈內作業。
+    for daynumber in range(totaldays):
+        datestring = (startdate + dt.timedelta(days=daynumber)).date()
+        a = datestring.strftime("%Y%m%d")
+        yield a
