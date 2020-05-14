@@ -1,0 +1,10 @@
+from selenium import webdriver
+
+#開啟瀏覽器(brower)
+driver = webdriver.Chrome("./chromedriver.exe")
+url = 'https://www.baseball-reference.com/boxes/KCA/KCA201604030.shtml'
+driver.get(url)
+
+s = driver.find_element_by_name('//*[@id="NewYorkMetsbatting"]')
+
+
