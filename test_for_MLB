@@ -1,0 +1,119 @@
+from MLB_date import date_search
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+
+
+
+'''
+對全天賽程url提出requset
+'''
+url = 'https://www.baseball-reference.com/boxes/?date=2016-04-03'
+headers = {
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36'
+}
+req = requests.get(url , headers=headers)
+soup = BeautifulSoup(req.text , 'html.parser')
+
+
+'''
+從全天賽程url 找出進入單場比賽的url (用for列出所有url)
+'''
+Final = soup.select('td[class="right gamelink"] a')[0]['href']
+allday = 'https://www.baseball-reference.com/' + Final
+
+
+'''
+時間 for檔名與game_date column
+'''
+game_day = url[-10:]
+# print(game_day)  #2016-04-03
+
+
+'''
+對當場比賽url 提出request
+'''
+url_1 = allday
+headers = {
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36'
+}
+req = requests.get(url_1,headers=headers)
+soup = BeautifulSoup(req.text,'html.parser')
+# print(soup.prettify())
+
+#
+# '''
+# 主客隊名&前五局分數
+# '''
+# v_data = soup.select('table[class="linescore nohover stats_table no_freeze"]  tbody tr')[0].select('td')
+# h_data = soup.select('table[class="linescore nohover stats_table no_freeze"]  tbody tr')[1].select('td')
+# # v_name = v_data[1].text #New York Mets
+# # h_name = h_data[1].text #Kansas City Royals
+# vh_name = v_data[1].text + ' @ ' + h_data[1].text
+# # print(vh_name)
+# v_point = v_data[2:7]  #[<td class="center">0</td>, <td class="center">0</td>, <td class="center">0</td>, <td class="center">0</td>, <td class="center">0</td>]
+# h_point = h_data[2:7]
+#
+# v_sum = 0
+# for i in v_point :
+#        y = i.text
+#        v_sum += int(y)
+# # print(v_sum) #0
+#
+# h_sum = 0
+# for i in h_point :
+#        y = i.text
+#        h_sum += int(y)
+# # print(h_sum) #2
+
+'''
+球員
+'''
+aaa = soup.select('div[style="overflow:auto"]')
+print(aaa)
+#pip install lxml
+#pip install html5lib
+# pd.read_html(url) #有22個table
+# pd.read_html(url)[0]  #隊伍勝敗
+# pd.read_html(url)[1]  #勝敗投救援成功
+# print(url_1)
+# sss = pd.read_html('https://www.baseball-reference.com/players/c/colonba01.shtml')
+# print(len(sss))
+# print(sss)
+# sss.to_csv('ccc.csv',index=False)
+
+
+
+
+
+# '''
+# 主程式
+# '''
+# aaa = {'date':game_day,
+#        'team_name':vh_name,
+#        '1_top':v_point[0].text,
+#        '1_bottom' :h_point[0].text,
+#        '2_top' :v_point[1].text,
+#        '2_bottom' :h_point[1].text,
+#        '3_top' :v_point[2].text,
+#        '3_bottom' :h_point[2].text,
+#        '4_top' :v_point[3].text,
+#        '4_bottonm' :h_point[3].text,
+#        '5_top' :v_point[4].text,
+#        '5_bottom' :h_point[4].text,
+#        'visiting_total' :v_sum,
+#        'home_total' :h_sum,
+#
+# }
+# # print(aaa)
+# df = pd.DataFrame(aaa,index=[0])
+# #if df = pd.DataFrame(aaa)
+# # ValueError: If using all scalar values, you must pass an index
+# # https://blog.csdn.net/weixin_39750084/article/details/81429037
+# # print(df)
+#
+# '''
+# 存檔
+# '''
+# df.to_csv("日期主客隊.csv",index=False) #不印出index
