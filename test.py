@@ -1,5 +1,4 @@
-from game import time_search
-from game import time_search
+from MLB_date import date_search
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -7,7 +6,7 @@ import pprint
 from time import sleep
 from random import randint
 
-s = time_search()
+s = date_search()
 for date in s:
 
     url = 'https://www.sportsbookreview.com/betting-odds/mlb-baseball/pointspread/1st-half/?date={}'.format(date)
@@ -17,7 +16,10 @@ for date in s:
     req = requests.get(url, headers = headers)
     soup = BeautifulSoup(req.text,'html.parser')
 
-    game_date = url[-8:]
+    game_year = url[-8:-4]
+    game_month = url[-4:-2]
+    game_day = url[-2:]
+    game_date = game_year + '-' + game_month + '-' + game_day
     print(game_date)
 
     '''
@@ -31,7 +33,7 @@ for date in s:
     # print(len(gametatle))  #當天比賽場數
 
     '''
-    塞index取單場的資訊
+    當日無法賽則略過
     '''
     # for game_session in range(len(teamname)) : #用len()設定場次
     #     num = game_session
@@ -40,7 +42,7 @@ for date in s:
     except IndexError:
         print('\n【no game in today】\n')
         continue
-    # print(teamname)
+
 
 
 
@@ -106,7 +108,6 @@ for date in s:
         vh_point = [zz.text for zz in gamepoint ][:10]
         v_point = vh_point[::2]  #客隊1-5局分數 ['0', '0', '0', '0', '0']
         h_point = vh_point[1::2] #主隊1-5局分數 ['1', '0', '0', '2', '0']
-        print(h_point)
 
         top1 += [v_point[0]]
         top2 += [v_point[1]]
@@ -265,4 +266,4 @@ for date in s:
     #測試輸出
     # game20160403.to_csv('game{date}.csv'.format(date=date), encoding='utf_8_sig',index=False)
     # sleep(randint(3,5))
-    print('\ndone\n')
+    print('\n\n|| done ||\n\n')
