@@ -5,6 +5,13 @@ from time import sleep
 import datetime
 import pandas as pd
 
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options as options
+from bs4 import BeautifulSoup
+from time import sleep
+import datetime
+import pandas as pd
+
 options = options()
 prefs = {
     'profile.default_content_setting_values' :
@@ -25,33 +32,4 @@ html = driver.get(url)
 html_data = driver.page_source
 #soup = BeautifulSoup(html,'html.parser')
 tables = pd.read_html(html_data)
-print(tables[9])
-
-
-a = tables[9]
-b = a['Batting']
-c = ','.join(str(i) for i in b).split(',')
-# print(len(c))
-Batting = []
-for i in c:
-    x = i.split(' ')
-    y = len(x)
-    if y == 3 :
-        a = i.split(' ')
-        # print(a[2][:2])
-        if a[2][:2] == 'P' :
-            continue
-        elif a[2][:2] == 'PH':
-            continue
-        else:
-            batter = a[0] + ' ' + a[1]
-            Batting += [batter]
-    else:
-        pass
-print(Batting)
-
-
-
-tables[9].to_csv('tt.csv',encoding='utf-8-sig')
-
-driver.close()
+print(tables[12][1:],'\n',tables[13][1:])
