@@ -4,7 +4,11 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as options
 import time
-def mmm():
+
+
+
+#給日期 回傳當天比賽全部URL
+def game_url():
     s = date_search()
     for date in s:
         # print(date)
@@ -12,14 +16,12 @@ def mmm():
         month = date[4:6]
         day = date[6:8]
 
-
-        url = 'https://www.baseball-reference.com/boxes/?year={}&month={}&day={}'.format(year,month,day)
+        url = 'https://www.baseball-reference.com/boxes/?year={}&month={}&day={}'.format(year, month, day)
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36'
         }
-        req = requests.get(url , headers=headers)
-        soup = BeautifulSoup(req.text,'html.parser')
-
+        req = requests.get(url, headers=headers)
+        soup = BeautifulSoup(req.text, 'html.parser')
 
         try:
             a = soup.select('div[id="content"] h3')[0].text
@@ -27,20 +29,10 @@ def mmm():
             print('{}沒比賽'.format(date))
             continue
         except:
-            print('{}有比賽'.format(date))
+            # print('{}有比賽'.format(date))
             game_url = aaa(date)
-
-        
-
-
-
-
-
-
-
-
-
-
+            # print(game_url)
+            return game_url
 
 
 def aaa(date):
@@ -50,8 +42,6 @@ def aaa(date):
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options as options
     import time
-
-
 
     year = date[:4]
     month = date[4:6]
@@ -68,11 +58,13 @@ def aaa(date):
     # 不開啟視窗畫
     option = webdriver.ChromeOptions()
     options.add_argument('--headless')
+    options.add_argument('blink-settings=imagesEnabled=false')
+    options.add_argument("--disable-javascript")  # 禁用JavaScript
 
     # 開啟瀏覽器(brower)
     driver = webdriver.Chrome("./chromedriver.exe", options=options)
 
-    url = 'https://www.baseball-reference.com/boxes/?month={1}&day={2}&year={0}'.format(year,month,day)
+    url = 'https://www.baseball-reference.com/boxes/?month={1}&day={2}&year={0}'.format(year, month, day)
     driver.get(url)
 
     allday_game = driver.find_elements_by_link_text('Final')
@@ -80,15 +72,13 @@ def aaa(date):
     x = []
     for game_url in allday_game:
         x += [game_url.get_attribute('href')]
-    print(x)
     return x
+
     time.sleep(3)
 
 
-
 if __name__ == '__main__':
-    mmm()
-
+    game_url()
 
 
 
