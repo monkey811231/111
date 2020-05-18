@@ -24,9 +24,11 @@ for date in s:
             'notifications' : 2
              }
     }
-    #不開啟視窗畫
+
     option = webdriver.ChromeOptions()
-    options.add_argument('--headless')
+    options.add_argument("--headless")
+    options.add_argument('blink-settings=imagesEnabled=false')
+    options.add_argument("--disable-javascript")  # 禁用JavaScript
 
     #開啟瀏覽器(brower)
     driver = webdriver.Chrome("./chromedriver.exe",options=options)
