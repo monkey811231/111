@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.options import Options
 import pandas as pd
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
+import csv
 
 def game_url(date):  #判斷當天比賽
 
@@ -78,7 +79,7 @@ def for_search(url): #引述為url 的 list
                    'v_1', 'v_2', 'v_3', 'v_4', 'v_5', 'v_6', 'v_7', 'v_8', 'v_9', \
                    'h_1', 'h_2', 'h_3', 'h_4', 'h_5', 'h_6', 'h_7', 'h_8', 'h_9']
 
-    content = [] #裝爬到的數據塞進DataFrame
+    # content = [] #裝爬到的數據塞進DataFrame
 
     headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36'}
 
@@ -232,7 +233,7 @@ def for_search(url): #引述為url 的 list
     point = soup.select('table[class="linescore nohover stats_table no_freeze"] tbody tr')
     v_p = point[0].select('td')[2:7]
     h_p = point[1].select('td')[2:7]
-    print(v_p,h_p)
+    # print(v_p,h_p)
 
     v_total = 0 #客隊五局總分
     v_p_list = [] #客隊五局分數
@@ -256,13 +257,13 @@ def for_search(url): #引述為url 的 list
     print(venue)
 
 
-    content.append([game_date,matchup,v_p_list[0],h_p_list[0],v_p_list[1],h_p_list[1],v_p_list[2],h_p_list[2],v_p_list[3],h_p_list[3],v_p_list[4],h_p_list[4], \
+    content = [game_date,matchup,v_p_list[0],h_p_list[0],v_p_list[1],h_p_list[1],v_p_list[2],h_p_list[2],v_p_list[3],h_p_list[3],v_p_list[4],h_p_list[4], \
                         v_total,h_total,Umpires,venue,v_pitcher,h_pitcher,v_hitter[0][0],v_hitter[1][0],v_hitter[2][0],v_hitter[3][0],v_hitter[4][0], \
                         v_hitter[5][0],v_hitter[6][0],v_hitter[7][0],v_hitter[8][0],h_hitter[0][0],h_hitter[1][0],h_hitter[2][0],h_hitter[3][0],h_hitter[4][0],\
-                        h_hitter[5][0],h_hitter[6][0],h_hitter[7][0],h_hitter[8][0]])
-
-    date_frame = pd.DataFrame(content , columns=column_list)
-    date_frame.to_csv('game_Folder/game{date}.csv'.format(date=date),index=False,encoding='utf_8_sig',mode='a',header=False)
+                        h_hitter[5][0],h_hitter[6][0],h_hitter[7][0],h_hitter[8][0]]
+    return content
+    # date_frame = pd.DataFrame(content , columns=column_list)
+    # date_frame.to_csv('game_Folder/game{date}.csv'.format(date=date),index=False,encoding='utf_8_sig',mode='a',header=False)
 
     time_2 = time.time()
     print('■■■■■■單場花費 {} 秒■■■■■■'.format(round(time_2-time_1,2)))
@@ -282,18 +283,27 @@ def main():
             url_list = []
             for url in url_return:
                 url_list += [url]
-            with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
-                executor.map(for_search,url_list)
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                content_return =  executor.map(for_search,url_list)
                 column_list = ['date', 'matchup', '1top', '1bot', '2top', '2bot', '3top', '3bot', '4top', '4bot',
                                '5top', '5bot',
                                'visiting_total', 'home_total', 'Umpires', 'Venue', \
                                'visiting_pitcher', 'home_pitcher', \
                                'v_1', 'v_2', 'v_3', 'v_4', 'v_5', 'v_6', 'v_7', 'v_8', 'v_9', \
                                'h_1', 'h_2', 'h_3', 'h_4', 'h_5', 'h_6', 'h_7', 'h_8', 'h_9']
-                # date = url.split('0.')[0][-8:]
                 date = url.split('.shtml')[0][-9:-1]
-                date_frame = pd.DataFrame(columns=column_list)
-                date_frame.to_csv('game_Folder/game{date}.csv'.format(date=date), index=False, encoding='utf_8_sig')
+                with open('game_Folder/game{}.csv'.format(date),'w',newline='',encoding='utf-8-sig') as f :
+                    MLB_clumn = csv.writer(f)
+                    MLB_clumn.writerow(column_list)
+
+                for content_return_1 in content_return:
+                    print(content_return_1)
+                    with open('game_Folder/game{}.csv'.format(date),'a',newline='',encoding='utf-8-sig') as g :
+                        MLB_row = csv.writer(g)
+                        MLB_row.writerow(content_return_1)
+
+                # date_frame = pd.DataFrame(columns=column_list)
+                # date_frame.to_csv('game_Folder/game{date}.csv'.format(date=date), index=False, encoding='utf_8_sig')
 
             print('【完了】')
     finish = time.time()
