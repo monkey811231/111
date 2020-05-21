@@ -1,0 +1,306 @@
+import MLB_date
+import requests
+from bs4 import BeautifulSoup
+from MLB_date import date_search
+from selenium import webdriver
+import time
+from selenium.webdriver.chrome.options import Options
+import pandas as pd
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
+
+def game_url(date):  #判斷當天比賽
+
+    year = date[:4]
+    month = date[4:6]
+    day = date[6:8]
+
+    url = 'https://www.baseball-reference.com/boxes/?year={}&month={}&day={}'.format(year, month, day)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36'
+    }
+    req = requests.get(url, headers=headers)
+    soup = BeautifulSoup(req.text, 'html.parser')
+
+    try:
+        a = soup.select('div[id="content"] h3')[0].text
+        a == 'No Games Were or Have Yet Been Played on This Date'
+        return None
+    except:
+        options = Options()
+        # 禁止瀏覽器彈窗
+        prefs = {
+            'profile.default_content_setting_values':
+                {
+                    'notifications': 2
+                }
+        }
+        # 不開啟視窗畫
+        option = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        options.add_argument('blink-settings=imagesEnabled=false')
+        options.add_argument("--disable-javascript")  # 禁用JavaScript
+
+        # 開啟瀏覽器(brower)
+        driver = webdriver.Chrome("./chromedriver.exe", options=options)
+
+        driver.get(url)
+
+        allday_game = driver.find_elements_by_link_text('Final')
+        x = []
+        for game_url in allday_game:
+            x += [game_url.get_attribute('href')]
+
+        # 關閉瀏覽器
+        driver.quit()
+        return x
+
+def for_search(url): #引述為url 的 list
+
+
+
+    time_1 = time.time()
+    options = Options()
+    prefs = {
+        'profile.default_content_setting_values':
+            {
+                'notifications': 2
+            }
+    }
+    options.add_experimental_option('prefs', prefs)
+    options.add_argument("--headless")
+    options.add_argument("--disable-javascript")
+
+
+    column_list = ['date', 'matchup', '1top', '1bot', '2top', '2bot', '3top','3bot', '4top', '4bot', '5top', '5bot',
+                   'visiting_total', 'home_total', 'Umpires', 'Venue', \
+                   'visiting_pitcher', 'home_pitcher', \
+                   'v_1', 'v_2', 'v_3', 'v_4', 'v_5', 'v_6', 'v_7', 'v_8', 'v_9', \
+                   'h_1', 'h_2', 'h_3', 'h_4', 'h_5', 'h_6', 'h_7', 'h_8', 'h_9']
+
+    content = [] #裝爬到的數據塞進DataFrame
+
+    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36'}
+
+    date = url.split('.shtml')[0][-9:-1]
+    game_year = date[:4]
+    game_month = date[4:6]
+    game_day = date[6:]
+    game_date = game_year + '-' + game_month + '-' + game_day
+    print(game_date)
+
+
+    driver = webdriver.Chrome("./chromedriver.exe",options=options)
+    #driver.implicitly_wait(10)     #開啟網頁等待10秒在開始動作
+    html = driver.get(url)
+    html_data = driver.page_source      #取得網站原始碼
+    soup = BeautifulSoup(html_data,'html.parser')
+    tables = pd.read_html(html_data)        #取得table 此動作必須在selenium下處理 否則該table標籤爬不到
+    # print(tables[-5],'\n',tables[-4])
+    driver.quit()       #'完整'關閉背景的selenium相關程式
+
+    '''=============='''
+    '''  取得先發名單  '''
+    '''=============='''
+    v_player = tables[-5]
+    h_player = tables[-4]
+    a = v_player.loc[:,[1,2]].values
+    b = h_player.loc[:,[1,2]].values
+
+    # 取先發投手姓名
+    v_pitcher = ''
+    for i in a:
+        if i[1] == 'P':
+            v_pitcher += i[0]
+
+    h_pitcher = ''
+    for i in b:
+       if i[1] == 'P':
+           h_pitcher += i[0]
+    print(v_pitcher,h_pitcher)
+
+    #取先發打者姓名依棒次，國聯投手會加入打擊，所以國聯投手會出現兩次(投手/打者)
+    v_hitter_1 = v_player.loc[:,[1]].values
+    v_hitter = v_hitter_1[0:9]
+
+    h_hitter_1 = h_player.loc[:,[1]].values
+    h_hitter = h_hitter_1[0:9]
+
+
+    '''=============='''
+    '''  取對戰球隊   '''
+    '''=============='''
+    tm = soup.select('table[class="linescore nohover stats_table no_freeze"] tbody tr td a')[2::3]
+
+    v_tm = tm[0].text
+    h_tm = tm[1].text
+    '''
+    if v_tm == 'Boston Red Sox': #波士頓紅襪
+        teamname = 'SOX'
+    elif v_tm == 'Toronto Blue Jays': #多倫多藍鳥
+        teamname = 'TOR'
+    elif v_tm == 'Baltimore Orioles': #巴爾的摩金鶯
+        teamname = 'BAL'
+    elif v_tm == 'Tampa Bay Rays': #坦帕灣光芒2008~
+        teamname = 'TB'
+    elif v_tm == 'New York Yankees': #紐約洋基
+        teamname = 'NYY'
+
+    elif v_tm == 'Chicago White Sox': #芝加哥白襪
+        teamname = 'CWS'
+    elif v_tm == 'Cleveland Indians': #克里夫蘭印地安人
+        teamname = 'CLE'
+    elif v_tm == 'Detroit Tigers': #底特律老虎
+        teamname = 'DET'
+    elif v_tm == 'Kansas City Royals': #堪薩斯皇家
+        teamname = 'KC'
+    elif v_tm == 'Minnesota Twins': #明尼蘇達雙城
+        teamname = 'MIN'
+
+    elif v_tm == 'Oakland Athletics': #奧克蘭運動家
+        teamname = 'OAK'
+    elif v_tm == 'Los Angeles Angels of Anaheim': #洛杉磯天使
+        teamname = 'LAA'
+    elif v_tm == 'Texas Rangers': #德州遊騎兵
+        teamname = 'TEX'
+    elif v_tm == 'Houston Astros': #休士頓太空人
+        teamname = 'HOU'
+    elif v_tm == 'Seattle Mariners': #西雅圖水手
+        teamname = 'SEA'
+
+    elif v_tm == 'Atlanta Braves': #亞特蘭大勇士
+        teamname = 'ATL'
+    elif v_tm == 'Philadelphia Phillies': #費城費城人
+        teamname = 'PHI'
+    elif v_tm == 'Florida Marlins': # 佛羅里達馬林魚~2012
+        teamname = 'MIA'
+    elif v_tm == 'Miami Marlins': #邁阿密馬林魚2012~
+        teamname = 'MIA'
+    elif v_tm == 'New York Mets': #紐約大都會
+        teamname = 'NYM'
+    elif v_tm == 'Washington Nationals': #華盛頓國民
+        teamname = 'WSH'
+
+    elif v_tm == 'Milwaukee Brewers': #密爾瓦基釀酒人
+        teamname = 'MIL'
+    elif v_tm == 'Pittsburgh Pirates': #匹茲堡海盜
+        teamname = 'PIT'
+    elif v_tm == 'Cincinnati Reds': #辛辛那提紅人
+        teamname = 'CIN'
+    elif v_tm == 'Chicago Cubs': #芝加哥小熊
+        teamname = 'CHC'
+    elif v_tm == 'St. Louis Cardinals': #聖路易紅雀
+        teamname = 'STL'
+
+
+    elif v_tm == 'San Diego Padres': #聖地牙哥教士
+        teamname = 'SD'
+    elif v_tm == 'Arizona Diamondbacks': #亞利桑那響尾蛇
+        teamname = 'ARI'
+    elif v_tm == 'San Francisco Giants': #舊金山巨人
+        teamname = 'SF'
+    elif v_tm == 'Colorado Rockies': #科羅拉多洛磯
+        teamname = 'COL'
+    elif v_tm == 'Los Angeles Dodgers': #洛杉磯道奇
+        teamname = 'LAD'
+    else:
+        print('nameERROR')
+    print(teamname)
+    '''
+    #馬林魚2012改名 因此有兩個kay
+    teamname_dict = {'Boston Red Sox':'BOS' ,'Toronto Blue Jays':'TOR','Baltimore Orioles':'BAL','Tampa Bay Rays':'TB',
+                     'New York Yankees':'NYY' ,'Chicago White Sox':'CWS','Cleveland Indians':'CLE','Detroit Tigers':'DET',
+                     'Kansas City Royals':'KC','Minnesota Twins':'MIN','Oakland Athletics':'OAK','Los Angeles Angels of Anaheim':'LAA',
+                     'Texas Rangers':'TEX','Houston Astros':'HOU','Seattle Mariners':'SEA','Atlanta Braves':'ATL','Philadelphia Phillies':'PHI',
+                     'Florida Marlins':'MIA','Miami Marlins':'MIA','New York Mets':'NYM','Washington Nationals':'WSH',
+                     'Milwaukee Brewers':'MIL','Pittsburgh Pirates':'PIT','Cincinnati Reds':'CIN','Chicago Cubs':'CHC',
+                     'St. Louis Cardinals':'STL','San Diego Padres':'SD','Arizona Diamondbacks':'ARI','San Francisco Giants':'SF','Colorado Rockies':'COL',
+                     'Los Angeles Dodgers':'LAD'}
+    matchup = teamname_dict[v_tm] + '@' + teamname_dict[h_tm]
+    print(matchup)
+
+    '''==========='''
+    '''  取主裁判  '''
+    '''==========='''
+    HP = soup.select('div[id="content"] div[class="section_wrapper"]')[2].select('div[class="section_content"] div')[0].text
+    Umpires = HP.split(',')[0].split('- ')[1]
+    print(Umpires)
+
+    '''========='''
+    '''  取分數 '''
+    '''========='''
+    point = soup.select('table[class="linescore nohover stats_table no_freeze"] tbody tr')
+    v_p = point[0].select('td')[2:7]
+    h_p = point[1].select('td')[2:7]
+    print(v_p,h_p)
+
+    v_total = 0 #客隊五局總分
+    v_p_list = [] #客隊五局分數
+    for i in v_p:
+        j = int(i.text)
+        v_total += j
+        v_p_list += i.text
+
+    h_total = 0 #主隊伍局總分
+    h_p_list = [] #主隊五局分數
+    for i in h_p:
+        j = int(i.text)
+        h_total += j
+        h_p_list += i.text
+
+    '''========='''
+    '''  取球場  '''
+    '''========='''
+    Venue_name = soup.select('div[class="scorebox_meta"] div')[3].text
+    venue = ' '.join(Venue_name.split(' ')[1:])
+    print(venue)
+
+
+    content.append([game_date,matchup,v_p_list[0],h_p_list[0],v_p_list[1],h_p_list[1],v_p_list[2],h_p_list[2],v_p_list[3],h_p_list[3],v_p_list[4],h_p_list[4], \
+                        v_total,h_total,Umpires,venue,v_pitcher,h_pitcher,v_hitter[0][0],v_hitter[1][0],v_hitter[2][0],v_hitter[3][0],v_hitter[4][0], \
+                        v_hitter[5][0],v_hitter[6][0],v_hitter[7][0],v_hitter[8][0],h_hitter[0][0],h_hitter[1][0],h_hitter[2][0],h_hitter[3][0],h_hitter[4][0],\
+                        h_hitter[5][0],h_hitter[6][0],h_hitter[7][0],h_hitter[8][0]])
+
+    date_frame = pd.DataFrame(content , columns=column_list)
+    date_frame.to_csv('game_Folder/game{date}.csv'.format(date=date),index=False,encoding='utf_8_sig',mode='a',header=False)
+
+    time_2 = time.time()
+    print('■■■■■■單場花費 {} 秒■■■■■■'.format(round(time_2-time_1,2)))
+
+def main():
+    start = time.time()
+    for i in date_search():
+        url_return = game_url(i)
+        # print(url_return)
+        if url_return == None:
+            print(i + 'is' +str(url_return))
+            continue
+        elif 'allstar-game' == str(url_return).split('.shtml')[0][-12:]:
+            print('ALL-STAR')
+            continue
+        else: #如果有回傳LIST 利用URL呼叫內容爬蟲程式
+            url_list = []
+            for url in url_return:
+                url_list += [url]
+            with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+                executor.map(for_search,url_list)
+                column_list = ['date', 'matchup', '1top', '1bot', '2top', '2bot', '3top', '3bot', '4top', '4bot',
+                               '5top', '5bot',
+                               'visiting_total', 'home_total', 'Umpires', 'Venue', \
+                               'visiting_pitcher', 'home_pitcher', \
+                               'v_1', 'v_2', 'v_3', 'v_4', 'v_5', 'v_6', 'v_7', 'v_8', 'v_9', \
+                               'h_1', 'h_2', 'h_3', 'h_4', 'h_5', 'h_6', 'h_7', 'h_8', 'h_9']
+                # date = url.split('0.')[0][-8:]
+                date = url.split('.shtml')[0][-9:-1]
+                date_frame = pd.DataFrame(columns=column_list)
+                date_frame.to_csv('game_Folder/game{date}.csv'.format(date=date), index=False, encoding='utf_8_sig')
+
+            print('【完了】')
+    finish = time.time()
+
+    print('■■■■■■■■■共計花費 {} 秒■■■■■■■■■\n\n '.format(round(finish-start,2)))
+
+
+
+if __name__ == "__main__":
+    main()
