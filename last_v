@@ -116,7 +116,7 @@ def for_search(url):  # 引述為url 的 list
     for i in b:
         if i[1] == 'P':
             h_pitcher += i[0]
-    print(v_pitcher, h_pitcher)
+    # print(v_pitcher, h_pitcher)
 
     # 取先發打者姓名依棒次，國聯投手會加入打擊，所以國聯投手會出現兩次(投手/打者)
     v_hitter_1 = v_player.loc[:, [1]].values
@@ -222,7 +222,7 @@ def for_search(url):  # 引述為url 的 list
                      'San Francisco Giants': 'SF', 'Colorado Rockies': 'COL',
                      'Los Angeles Dodgers': 'LAD'}
     matchup = teamname_dict[v_tm] + '@' + teamname_dict[h_tm]
-    print(matchup)
+    # print(matchup)
 
     '''==========='''
     '''  取主裁判  '''
@@ -230,7 +230,7 @@ def for_search(url):  # 引述為url 的 list
     HP = soup.select('div[id="content"] div[class="section_wrapper"]')[2].select('div[class="section_content"] div')[
         0].text
     Umpires = HP.split(',')[0].split('- ')[1]
-    print(Umpires)
+    # print(Umpires)
 
     '''========='''
     '''  取分數 '''
@@ -264,11 +264,16 @@ def for_search(url):  # 引述為url 的 list
     '''========='''
     Venue_name = soup.select('div[class="scorebox_meta"] div')[3].text
     venue = ' '.join(Venue_name.split(' ')[1:])
-    print(venue)
+    # print(venue)
     '''========='''
     '''  取時間  '''
     '''========='''
     game_timezz = soup.select('div[class="scorebox_meta"] div')[1].text
+    if game_timezz.split(':')[0] == 'Start Time' :
+        pass
+    else:
+        game_timezz = soup.select('div[class="scorebox_meta"] div')[2].text
+
     game_timez = game_timezz.split(' ')[2:4]
     if game_timez[1] == 'a.m.':
         aa = 'am'
@@ -280,6 +285,24 @@ def for_search(url):  # 引述為url 的 list
     g_t3 = time.strptime(g_t1, g_t2)
     game_time = f'{g_t3.tm_hour}:{g_t3.tm_min}'
     print(game_time)
+
+    # game_timezz = soup.select('div[class="scorebox_meta"] div')[1].text
+    # print('///////////////////////////////////')
+    # print(venue)
+    # print(soup.select('div[class="scorebox_meta"] div'))
+    # print(game_timezz)
+    # print('///////////////////////////////////')
+    # game_timez = game_timezz.split(' ')[2:4]
+    # if game_timez[1] == 'a.m.':
+    #     aa = 'am'
+    # else:
+    #     aa = 'pm'
+    #
+    # g_t1 = f'{game_timez[0]} {aa}'
+    # g_t2 = '%I:%M %p'
+    # g_t3 = time.strptime(g_t1, g_t2)
+    # game_time = f'{g_t3.tm_hour}:{g_t3.tm_min}'
+    # print(game_time)
 
 
     content = [game_date, game_time ,matchup, v_p_list[0], h_p_list[0], v_p_list[1], h_p_list[1], v_p_list[2], h_p_list[2],
@@ -312,7 +335,7 @@ def main():
             for url in url_return:
                 url_list += [url]
             time_3 = time.time()
-            with concurrent.futures.ProcessPoolExecutor() as executor:
+            with concurrent.futures.ProcessPoolExecutor(max_workers = 1) as executor:
                 content_return = executor.map(for_search, url_list)
                 column_list = ['date', 'time' , 'matchup', '1top', '1bot', '2top', '2bot', '3top', '3bot', '4top', '4bot',
                                '5top', '5bot',
