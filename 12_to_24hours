@@ -1,0 +1,14 @@
+from datetime import datetime
+import time
+
+c  = 'Start Time: 7:38 p.m. Local'
+a = c.split(' ')[2:4]
+if a[1] == 'a.m.':
+    aa = 'am'
+else :
+    aa = 'pm'
+
+i = f'{a[0]} {aa}'
+j = '%I:%M %p'
+a = time.strptime(i , j)
+print(f'{a.tm_hour}:{a.tm_min}')
