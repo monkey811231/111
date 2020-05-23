@@ -284,26 +284,7 @@ def for_search(url):  # 引述為url 的 list
     g_t2 = '%I:%M %p'
     g_t3 = time.strptime(g_t1, g_t2)
     game_time = f'{g_t3.tm_hour}:{g_t3.tm_min}'
-    print(game_time)
-
-    # game_timezz = soup.select('div[class="scorebox_meta"] div')[1].text
-    # print('///////////////////////////////////')
-    # print(venue)
-    # print(soup.select('div[class="scorebox_meta"] div'))
-    # print(game_timezz)
-    # print('///////////////////////////////////')
-    # game_timez = game_timezz.split(' ')[2:4]
-    # if game_timez[1] == 'a.m.':
-    #     aa = 'am'
-    # else:
-    #     aa = 'pm'
-    #
-    # g_t1 = f'{game_timez[0]} {aa}'
-    # g_t2 = '%I:%M %p'
-    # g_t3 = time.strptime(g_t1, g_t2)
-    # game_time = f'{g_t3.tm_hour}:{g_t3.tm_min}'
     # print(game_time)
-
 
     content = [game_date, game_time ,matchup, v_p_list[0], h_p_list[0], v_p_list[1], h_p_list[1], v_p_list[2], h_p_list[2],
                v_p_list[3], h_p_list[3], v_p_list[4], h_p_list[4],
@@ -335,7 +316,7 @@ def main():
             for url in url_return:
                 url_list += [url]
             time_3 = time.time()
-            with concurrent.futures.ProcessPoolExecutor(max_workers = 1) as executor:
+            with concurrent.futures.ProcessPoolExecutor(max_workers = 12) as executor:
                 content_return = executor.map(for_search, url_list)
                 column_list = ['date', 'time' , 'matchup', '1top', '1bot', '2top', '2bot', '3top', '3bot', '4top', '4bot',
                                '5top', '5bot',
