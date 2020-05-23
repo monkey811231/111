@@ -243,6 +243,8 @@ def for_search(url):  # 引述為url 的 list
     v_total = 0  # 客隊五局總分
     v_p_list = []  # 客隊五局分數
     for i in v_p:
+        if i.text == 'X' :
+            continue
         j = int(i.text)
         v_total += j
         v_p_list += i.text
@@ -250,6 +252,9 @@ def for_search(url):  # 引述為url 的 list
     h_total = 0  # 主隊伍局總分
     h_p_list = []  # 主隊五局分數
     for i in h_p:
+        if i.text == 'X' : #如果為分數欄X則只加入list 加總部分continue掉
+            h_p_list += i.text
+            continue
         j = int(i.text)
         h_total += j
         h_p_list += i.text
@@ -263,8 +268,17 @@ def for_search(url):  # 引述為url 的 list
     '''========='''
     '''  取時間  '''
     '''========='''
-    game_timezz = soup.select('div[class="scorebox_meta"] div')[4].text
-    game_time = game_timezz.split(' ')[2]
+    game_timezz = soup.select('div[class="scorebox_meta"] div')[1].text
+    game_timez = game_timezz.split(' ')[2:4]
+    if game_timez[1] == 'a.m.':
+        aa = 'am'
+    else:
+        aa = 'pm'
+
+    g_t1 = f'{game_timez[0]} {aa}'
+    g_t2 = '%I:%M %p'
+    g_t3 = time.strptime(g_t1, g_t2)
+    game_time = f'{g_t3.tm_hour}:{g_t3.tm_min}'
     print(game_time)
 
 
