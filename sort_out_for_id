@@ -1,0 +1,105 @@
+import mysql.connector
+
+# def main():
+
+
+# def exception_handing(player_name):
+#利用idreference
+MLBdb = mysql.connector.connect(
+    host = '127.0.0.1',
+    port = 3306,
+    user = 'root',
+    password = 'root',
+    database = 'moneyballdatabase'
+    )
+
+cursor = MLBdb.cursor()
+
+sql_command = 'SELECT * FROM id_reference '
+cursor.execute(sql_command)
+show = cursor.fetchall()
+# print(show)
+
+#製作球員:ID的dict
+id_dic = {i[1]:i[0] for i in show }
+# print(id_dic)
+
+sql_for_name = 'SELECT mlb_name FROM id_copy'
+cursor.execute(sql_for_name)
+aa = cursor.fetchall() #列出('名字',)
+
+#用FOR迴圈處理取出乾淨的'名字'
+for i in aa :
+    i = i[0]
+    try:
+        id_reference_value = id_dic[i]
+        print(i,id_reference_value)  #名字.id
+
+        #處理例外(重複名稱)
+        if i == 'Chris Young' :
+            sql_set_id="""
+                    UPDATE away_pitcher FROM test WHERE 
+                    (
+                    away_pitcher='Chris Young' OR away_1='Chris Young' OR away_2='Chris Young' OR away_3='Chris Young' OR 
+                    away_4='Chris Young' OR away_5='Chris Young' OR away_6='Chris Young' OR away_7='Chris Young' OR away_8='Chris Young' OR away_9='Chris Young'
+                    ) 
+                    AND 
+                    (
+                    (YEAR(game_date)=2010)AND(matchup LIKE 'SD%') OR 
+                    ((YEAR(game_date)=2011 OR YEAR(game_date)=2012)AND(matchup LIKE 'NYM%')) OR
+                    (YEAR(game_date)=2014 AND matchup LIKE 'SEA%') OR
+                    ((YEAR(game_date)=2015 OR YEAR(game_date)=2016 OR YEAR(game_date)=2017) AND (matchup LIKE 'KC%'))
+                    ) 
+                    """
+            cursor.execute(sql_set_id)
+            # sql_for_match_away = f"""SELECT year(game_date),matchup FROM test WHERE away_pitcher='{i}' or
+            #                     away_1='{i}' or away_2='{i}' or away_3='{i}' or away_4='{i}' or away_5='{i}' or away_6='{i}' or away_7='{i}' or away_8='{i}' or away_9='{i}'"""
+            # cursor.execute(sql_for_match_away)
+            # away = cursor.fetchall()
+            # print('\n■■■■■■■■■■■■■■■')
+            # print(f'player〖{i}〗date&&matchup{ away }')
+            #
+            # for year_team in away :
+            #     year_a = year_team[0]
+            #     team_a = year_team[1].split('@')[0]
+            #     year_team1 = f'{year_a}{team_a}'
+            #     if year_team1 == '2010SD' or year_team1=='2011NYM' or year_team1=='2012NYM' or year_team1=='2014SEA' or year_team1=='2015KC' or year_team1=='2016KC' or year_team1=='2017KC':
+            #         sql_update = f'UPDATE test SET away_pitcher=432934 WHERE mlb_name="{i}"'
+            #         cursor.execute(sql_update)
+            print('■■■■■■■■■■■■■■■\n')
+
+            sql_for_match_home = f"""SELECT year(game_date),matchup FROM test WHERE home_pitcher='{i}' or 
+                                home_1='{i}' or home_2='{i}' or home_3='{i}' or home_4='{i}' or home_5='{i}' or home_6='{i}' or home_7='{i}' or home_8='{i}' or home_9='{i}'"""
+            cursor.execute(sql_for_match_home)
+            home = cursor.fetchall()
+            print('\n■■■■■■■■■■■■■■■')
+            print(f'player〖{i}〗date&&matchup{ home }')
+            print('■■■■■■■■■■■■■■■\n')
+
+
+        elif i=='Chris Young' or i=='Chris Smith' \
+            or i=='Luis Jimenez' or i=='Miguel Gonzalez' or i=='Javy Guerra' \
+            or i=='Luis Perdomo' or i=='David Carpenter' or i=='Matt Reynolds' \
+            or i=='Will Smith' or i=='Jose Ramirez' or i=='Austin Adams' \
+            or i=='Daniel Robertson' or i=='Matt Duffy' :
+            # print('■■■■■■■重複名稱■■■■■■■')
+            pass
+
+
+        else:
+            pass
+            #處理名字沒重複的ID
+            #     sql_unlock = 'SET SQL_SAFE_UPDATES=0'
+            #     sql_update = f'UPDATE id_copy SET mlb_name={id_reference_value} WHERE mlb_name="{i}"'
+            #     sql_lock = 'SET SQL_SAFE_UPDATES=1'
+            #     cursor.execute(sql_unlock)
+            #     cursor.execute(sql_update)
+            #     cursor.execute(sql_lock)
+            #     MLBdb.commit()
+            #     print(sql_update)
+
+    except:
+        pass
+
+
+cursor.close()
