@@ -1,0 +1,59 @@
+import mysql.connector
+import pandas as pd
+
+MLBdb = mysql.connector.connect(
+    host = '127.0.0.1',
+    port = 3306,
+    user = 'root',
+    password = 'root',
+    database = 'moneyballdatabase'
+    )
+
+cursor = MLBdb.cursor()
+game_year = 2019
+sql_command = f'SELECT * FROM batter_data_{game_year} '
+cursor.execute(sql_command)
+show = cursor.fetchall()
+# print(show)
+
+#製作球員:ID的dict
+id_dic = {i[1]:i[0] for i in show }
+print(id_dic)
+
+
+#製作for迴圈用的
+columns_list = ['away_pitcher', 'home_pitcher','away_1','away_2','away_3','away_4','away_5','away_6','away_7','away_8','away_9',
+                'home_1','home_2','home_3','home_4','home_5','home_6','home_7','home_8','home_9']
+
+#用2010away_pitcher做實驗
+# test_column = 'away_2'
+
+
+lost = []
+for test_column in columns_list :
+    sql_for_name = f'SELECT {test_column} FROM test WHERE YEAR(game_date)={game_year}'  #
+    cursor.execute(sql_for_name)
+    name_list = cursor.fetchall() #列出('名字',)
+    # print(f'SELECT {test_column} FROM test WHERE YEAR(game_date)={game_year}')
+
+    lost_player = []
+    for name in name_list :
+        name = name[0] #從id_reference 取名字
+        try:
+            id = id_dic[name]
+
+            # pass
+            # sql_unlock = 'SET SQL_SAFE_UPDATES=0'
+            print(f'UPDATE test SET {test_column}={id_dic[name]} WHERE mlb_name="{name}"')
+            # sql_update =f'UPDATE test SET {test_column}={id_dic[name]} WHERE mlb_name="{name}"'
+            # sql_lock = 'SET SQL_SAFE_UPDATES=1'
+            # cursor.execute(sql_unlock)
+            # cursor.execute(sql_update)
+            # cursor.execute(sql_lock)
+        except:
+            lost_player += [name]
+
+    # print(len(lost_player))
+    lost=set(lost_player)
+with open('lost_player.txt','a', newline='\n',encoding='utf-8-sig',) as a:
+    a.write(f'\n{game_year}{lost}')
