@@ -2,8 +2,8 @@ import smtplib
 from email.mime.text import MIMEText
 
 def email(str):
-    gmail_user = 'monkey811231@gmail.com'
-    gmail_password = 'kvpblexhnheigesl' # google for python password
+    gmail_user = '@gmail.com'
+    gmail_password = '' # google for python password
 
     msg = MIMEText('爬蟲已完成!!!!')
     msg['Subject'] = f'{str} is finish.'
