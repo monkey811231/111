@@ -11,23 +11,24 @@ from selenium.webdriver.chrome.options import Options
 
 def GAME_DATE(US_ET_date):
     MLB_url = f'https://www.mlb.com/starting-lineups/{US_ET_date}'
+    # print(MLB_url)
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36'
     }
     req = requests.get(MLB_url , headers = headers)
     soup = BeautifulSoup(req.text , 'html.parser')
 
-    #chech有多少場次(包含延賽)
+    #場次
     Number_of_games = len(soup.select('div[class="starting-lineups__game"]'))
     # print(Number_of_games)
 
     game_and_time_dic = {}
-    for i in range(Number_of_games) :  #將每個賽事原定時間取出 並且換成賽前30分鐘 用做爬取的時間列表
+    for i in range(Number_of_games) :
         game_start_time = soup.select('div[class="starting-lineups__game-date-time"] time ')[i]['datetime'][11:16]
         get_30min_ago = datetime.datetime.strptime(game_start_time , '%H:%M') + datetime.timedelta(minutes= -30) + datetime.timedelta(hours=-4)
         game_start_time = str(get_30min_ago).split(' ')[1]
         game_and_time_dic[i] = game_start_time
-    return game_and_time_dic,Number_of_games   #目前Number_of_games沒使用到
+    return game_and_time_dic,Number_of_games
 
 
 def spider(index, gamedate, gametime):
@@ -131,6 +132,11 @@ def spider(index, gamedate, gametime):
         print(return_list)
         print('■■■■■■■■■■■■■■■■■■■■■■■■■■■■■')
 
+
+
+
+
+
 # option = webdriver.ChromeOptions()
 #
 # options = Options()
@@ -151,7 +157,7 @@ def spider(index, gamedate, gametime):
 # driver.get(MLB_url)
 # driver.quit()
 
+
 if __name__ == '__main__':
     # GAME_DATE('2020-07-27')
-    # spider(1, '2020-07-28', '07:34:57')
     spider()
